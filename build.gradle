@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.8'
+    id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.asciidoctor.jvm.convert' version '3.3.2'
+}
+
+bootJar {
+    archiveFileName = "app.jar"
+}
+
+group = 'org.stzverev'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('snippetsDir', file("build/generated-snippets"))
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0'
+
+    //LOMBOK
+    compileOnly 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+
+    //TEST DEPENDENCIES
+    testImplementation 'io.projectreactor:reactor-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'com.maciejwalkowiak.spring:wiremock-spring-boot:2.1.2'
+
+    //TEST CONTAINERS
+    testImplementation "org.testcontainers:mongodb:1.20.0"
+}
+
+tasks.named('test', Test) {
+    outputs.dir snippetsDir
+    useJUnitPlatform()
+}
+
+tasks.named('asciidoctor') {
+    inputs.dir snippetsDir
+    dependsOn test
+}
+
+def dockerBuildDir='build/docker'
+
+tasks.register('dockerPrepare', Copy) {
+    dependsOn('build')
+
+    from("src/main/docker/Dockerfile")
+
+    from(bootJar) {
+        into('app/')
+    }
+
+    into(dockerBuildDir)
+}
+
+tasks.register('docker', Exec) {
+    dependsOn 'dockerPrepare'
+    commandLine 'docker', 'build', dockerBuildDir, '-t', "${rootProject.name}:latest"
+}

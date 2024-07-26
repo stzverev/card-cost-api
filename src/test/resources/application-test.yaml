@@ -1,0 +1,4 @@
+logging:
+  level:
+    org.stzverev.cardcostapi: DEBUG
+    org.springframework: ERROR

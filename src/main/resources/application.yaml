@@ -1,0 +1,21 @@
+app:
+  thirdrpovider:
+    binlist:
+      baseUrl: "https://lookup.binlist.net"
+
+  iin-cache:
+    timeUnit: minutes
+    period: 1
+    enabled: true
+
+spring:
+  data:
+    mongodb:
+      authentication-database: admin
+      repositories:
+        type: reactive
+      database: "currency-cost"
+      auto-index-creation: true
+
+  jackson:
+    default-property-inclusion: non_null

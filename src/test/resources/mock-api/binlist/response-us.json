@@ -1,0 +1,15 @@
+{
+  "number": {},
+  "scheme": "american express",
+  "type": "credit",
+  "country": {
+    "numeric": "840",
+    "alpha2": "US",
+    "name": "United States of America (the)",
+    "emoji": "🇺🇸",
+    "currency": "USD",
+    "latitude": 38,
+    "longitude": -97
+  },
+  "bank": {}
+}
