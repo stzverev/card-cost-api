@@ -23,6 +23,21 @@ This will start the application in a Docker container.
 Once the application is running, you can access the API documentation by navigating to the following URL:
 `http://localhost:8080/swagger-ui.html`
 
+## Cache configuration 
+
+To reduce the number of requests to thirdparty provider, this application causes IIN information.
+Cache can be configured by the following environment variables in docker-compose file:
+* APP_IINCACHE_TIMEUNIT: Specifies the time unit for cache expiration. Possible values:
+    * milliseconds
+    * seconds
+    * minutes
+    * days
+    * hours
+* APP_IINCACHE_PERIOD: Sets the cache duration based on the specified time unit. Type: Long
+* APP_IINCACHE_ENABLED: Enables or disables caching. Possible values:
+  * true
+  * false
+
 ## Prerequisites
 
 * Docker: Make sure Docker is installed and running on your machine.
