@@ -73,6 +73,7 @@ public class CardCostExceptionHandler {
     public ResponseEntity<CardCostResponseStatus> handleResponseStatusException(ResponseStatusException ex) {
         return ResponseEntity.status(ex.getStatusCode()).body(CardCostResponseStatus.builder()
                 .status(Status.ERROR)
+                .errorCode(ex.getStatusCode().value())
                 .message(ex.getMessage())
                 .build()
         );
