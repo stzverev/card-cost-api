@@ -163,8 +163,8 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
 
         @DisplayName("Should get card info from cahce without response to thirdparty provider")
         @Order(2)
-        @Test
-        void testGetCardCost_shouldRecieveFromCache() {
+        @RepeatedTest(30)
+        void testGetCardCost_shouldReceiveFromCache() {
             //GIVEN
             var expectedResponse = resourceReader.from("card-cost-api/cardCost/card-cost-us-response.json")
                     .mapTo(CardCostResponse.class);
