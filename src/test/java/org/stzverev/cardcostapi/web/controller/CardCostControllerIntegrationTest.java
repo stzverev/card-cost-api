@@ -5,6 +5,8 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -163,7 +165,8 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
 
         @DisplayName("Should get card info from cahce without response to thirdparty provider")
         @Order(2)
-        @RepeatedTest(30)
+        @Execution(ExecutionMode.CONCURRENT)
+        @RepeatedTest(100)
         void testGetCardCost_shouldReceiveFromCache() {
             //GIVEN
             var expectedResponse = resourceReader.from("card-cost-api/cardCost/card-cost-us-response.json")
