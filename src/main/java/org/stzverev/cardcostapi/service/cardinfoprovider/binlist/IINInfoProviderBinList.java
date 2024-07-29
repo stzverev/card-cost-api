@@ -5,10 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.stzverev.cardcostapi.exceptions.ThirdPartyException;
+import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
-import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import reactor.core.publisher.Mono;
+import reactor.util.retry.Retry;
+
+import java.time.Duration;
 
 /**
  * Represents an implementation of the {@link IINInfoProvider} interface that retrieves card information
@@ -48,6 +51,7 @@ public class IINInfoProviderBinList implements IINInfoProvider {
                                 new ThirdPartyException(clientResponse.statusCode(),
                                         "Error getting card info by binlist provider")))
                 .bodyToMono(BinlistResponse.class)
+                .retryWhen(Retry.backoff(3, Duration.ofSeconds(3)).jitter(0.75))
                 .doOnNext(binlistResponse -> log.info("Card info is provided by binlist: {}", binlistResponse))
                 .map(response -> new IINInfo(cardNumber, response.country().alpha2()));
     }
