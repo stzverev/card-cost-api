@@ -4,10 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.stzverev.cardcostapi.domain.entity.IINCacheEntity;
 import org.stzverev.cardcostapi.domain.repository.IINCacheRepository;
+import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
-import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.Duration;
 import java.util.Date;
@@ -42,13 +43,16 @@ public class IINCacheProvider implements IINInfoProvider {
                 .doOnNext(iinCacheEntity -> log.info("iin is fetched from cache: {}", iinCacheEntity))
                 .map(iinInfoProvider -> new IINInfo(cardNumber, iinInfoProvider.getIssuingCountry()))
                 .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber))
-                .flatMap(IINInfo -> iinCacheRepository.save(
-                                IINCacheEntity.builder()
+                .publishOn(Schedulers.boundedElastic())
+                .doOnNext(IINInfo ->
+                        iinCacheRepository.save(IINCacheEntity.builder()
                                         .IIN(iin)
                                         .issuingCountry(IINInfo.country())
                                         .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
-                                        .build())
-                        .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
-                        .map(it -> IINInfo));
+                                        .build()
+                                )
+                                .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
+                                .subscribe()
+                );
     }
 }
