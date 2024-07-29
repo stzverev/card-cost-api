@@ -6,12 +6,10 @@ import org.springframework.stereotype.Component;
 public class IINExtractor {
 
     public String getIin(String cardNumber) {
-        if (cardNumber.length() >= 8) {
-            return cardNumber.substring(0, 8);
-        } else if (cardNumber.length() >= 6) {
-            return cardNumber.substring(0, 6);
+        if (cardNumber == null || cardNumber.length() < 6) {
+            throw new IllegalArgumentException("Invalid card number: " + cardNumber);
         }
-        throw new IllegalArgumentException("Invalid card number: " + cardNumber);
+        return cardNumber.substring(0, Math.min(cardNumber.length(), 8));
     }
 
 }
