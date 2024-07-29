@@ -19,7 +19,8 @@ import org.stzverev.cardcostapi.util.resourcereader.ResourceReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlMatching;
 import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.web.reactive.function.BodyInserters.fromResource;
 
@@ -156,6 +157,8 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
                     .expectBody()
                     .jsonPath("$.country").value(equalTo(expectedResponse.country()))
                     .jsonPath("$.cost").value(equalTo(expectedResponse.cost().intValue()));
+
+            wireMockServer.verify(1, WireMock.getRequestedFor(urlMatching("/37828224")));
         }
 
         @DisplayName("Should get card info from cahce without response to thirdparty provider")
