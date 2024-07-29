@@ -35,7 +35,7 @@ public class IINCacheProvider implements IINInfoProvider {
     void init() {
         cachePublisher.asFlux()
                 .flatMap(iinInfo -> iinCacheRepository.save(IINCacheEntity.builder()
-                                .IIN(iinInfo.iinInfo())
+                                .IIN(iinInfo.iin())
                                 .issuingCountry(iinInfo.country())
                                 .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
                                 .build())
@@ -58,8 +58,9 @@ public class IINCacheProvider implements IINInfoProvider {
         final String iin = iinExtractor.getIin(cardNumber);
         return iinCacheRepository.findByIIN(iin)
                 .doOnNext(iinCacheEntity -> log.info("iin is fetched from cache: {}", iinCacheEntity))
-                .map(iinInfoProvider -> new IINInfo(cardNumber, iinInfoProvider.getIssuingCountry()))
+                .map(iinInfoProvider -> new IINInfo(iin, iinInfoProvider.getIssuingCountry()))
                 .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber)
                         .doOnNext(cachePublisher::tryEmitNext));
     }
+
 }
