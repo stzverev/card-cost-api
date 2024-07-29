@@ -43,7 +43,6 @@ public class IINCacheProvider implements IINInfoProvider {
                 .doOnNext(iinCacheEntity -> log.info("iin is fetched from cache: {}", iinCacheEntity))
                 .map(iinInfoProvider -> new IINInfo(cardNumber, iinInfoProvider.getIssuingCountry()))
                 .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber))
-                .publishOn(Schedulers.boundedElastic())
                 .doOnNext(IINInfo ->
                         iinCacheRepository.save(IINCacheEntity.builder()
                                         .IIN(iin)
@@ -51,6 +50,7 @@ public class IINCacheProvider implements IINInfoProvider {
                                         .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
                                         .build()
                                 )
+                                .subscribeOn(Schedulers.boundedElastic())
                                 .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
                                 .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity", throwable))
                                 .subscribe()
