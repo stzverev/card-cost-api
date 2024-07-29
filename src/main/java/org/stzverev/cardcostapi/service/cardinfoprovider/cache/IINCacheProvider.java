@@ -29,7 +29,7 @@ public class IINCacheProvider implements IINInfoProvider {
 
     private final Duration expirationDuration;
 
-    private final Sinks.Many<IINInfo> cachePublisher = Sinks.many().replay().all();
+    private final Sinks.Many<IINInfo> cachePublisher = Sinks.many().unicast().onBackpressureBuffer();
 
     @PostConstruct
     void init() {
