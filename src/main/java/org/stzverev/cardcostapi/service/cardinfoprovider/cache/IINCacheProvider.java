@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.stzverev.cardcostapi.domain.entity.IINCacheEntity;
 import org.stzverev.cardcostapi.domain.repository.IINCacheRepository;
+import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
 import reactor.core.publisher.Mono;
@@ -23,6 +24,8 @@ public class IINCacheProvider implements IINInfoProvider {
     private final IINInfoProvider iinInfoProvider;
 
     private final IINCacheRepository iinCacheRepository;
+
+    private final IINExtractor iinExtractor;
 
     private final Duration expirationDuration;
 
@@ -43,17 +46,20 @@ public class IINCacheProvider implements IINInfoProvider {
     }
 
     /**
-     * Retrieves card information based on the Issuer Identification Number (IIN).
+     * Retrieves card information based on the card number from cache.
+     * If information is not found in cache, it will be fetched by delegate iinInfoProvider and
+     * saved into cache
      *
-     * @param iin The IIN to get card information for.
+     * @param cardNumber The card number.
      * @return A Mono containing the card information.
      */
     @Override
-    public Mono<IINInfo> getCardInfoByIin(final String iin) {
+    public Mono<IINInfo> getCardInfoByNumber(final String cardNumber) {
+        final String iin = iinExtractor.getIin(cardNumber);
         return iinCacheRepository.findByIIN(iin)
                 .doOnNext(iinCacheEntity -> log.info("iin is fetched from cache: {}", iinCacheEntity))
                 .map(iinInfoProvider -> new IINInfo(iin, iinInfoProvider.getIssuingCountry()))
-                .switchIfEmpty(iinInfoProvider.getCardInfoByIin(iin)
+                .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber)
                         .doOnNext(cachePublisher::tryEmitNext));
     }
 

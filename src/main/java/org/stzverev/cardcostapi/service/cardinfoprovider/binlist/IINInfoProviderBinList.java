@@ -5,14 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.stzverev.cardcostapi.exceptions.ThirdPartyException;
+import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
-
-import static java.util.Optional.ofNullable;
 
 /**
  * Represents an implementation of the {@link IINInfoProvider} interface that retrieves card information
@@ -24,22 +23,25 @@ public class IINInfoProviderBinList implements IINInfoProvider {
 
     private final String binListBaseUrl;
 
+    private final IINExtractor iinExtractor;
+
     /**
-     * Retrieves card information based on the Issuer Identification Number (IIN).
+     * Retrieves card information based on the card number.
      *
-     * @param iin The IIN
+     * @param cardNumber The card number.
      * @return A Mono containing the card information.
-     * @throws IllegalArgumentException If the provided IIN is null or empty, or if it has less than 6 characters.
-     * @throws ThirdPartyException If there is an error getting card information from the Binlist provider.
+     * @throws IllegalArgumentException if the card number is null or empty, or if the card number is less than 6 characters.
+     * @throws ThirdPartyException if there is an error retrieving the card information from the Binlist provider.
      */
     @Override
-    public Mono<IINInfo> getCardInfoByIin(final String iin) {
-        if (iin == null || iin.isEmpty()) {
-            return Mono.error(() -> new IllegalArgumentException("IIN cannot be null or empty"));
+    public Mono<IINInfo> getCardInfoByNumber(final String cardNumber) {
+        if (cardNumber == null || cardNumber.isEmpty()) {
+            return Mono.error(() -> new IllegalArgumentException("Card number cannot be null or empty"));
         }
-        if (iin.length() < 6) {
-            return Mono.error(() -> new IllegalArgumentException("IIN must be at least 6 characters"));
+        if (cardNumber.length() < 6) {
+            return Mono.error(() -> new IllegalArgumentException("Card number must be at least 6 characters"));
         }
+        final String iin = iinExtractor.getIin(cardNumber);
         return WebClient.create(binListBaseUrl)
                 .get()
                 .uri("/{cardNumber}", iin)
@@ -56,9 +58,6 @@ public class IINInfoProviderBinList implements IINInfoProvider {
                     case ThirdPartyException cause -> cause;
                     default -> throwable;
                 })
-                .filter(response -> ofNullable(response.country())
-                        .map(Country::alpha2)
-                        .orElse(null) != null)
                 .doOnNext(binlistResponse -> log.info("Card info is provided by binlist: {}", binlistResponse))
                 .map(response -> new IINInfo(iin, response.country().alpha2()));
     }

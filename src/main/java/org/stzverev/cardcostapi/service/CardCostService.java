@@ -17,8 +17,6 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static java.lang.Math.min;
-
 /**
  * This class is responsible for providing card cost information and updating clearing cost information
  */
@@ -32,17 +30,13 @@ public class CardCostService {
     private final CurrencyCostRepository costRepository;
 
     /**
-     * Retrieves the cost of a card based on the given card number.
+     * Retrieves the cost of a card based on the provided card number.
      *
-     * @param cardCostRequest The card cost request containing the card number.
-     * @return A Mono that emits the card cost response.
+     * @param cardCostRequest the request containing the card number
+     * @return a Mono object that emits the CardCostResponse once the card cost is retrieved
      */
     public Mono<CardCostResponse> getCardCost(CardCostRequest cardCostRequest) {
-        final String cardNumber = cardCostRequest.cardNumber();
-        final int cardLength = cardNumber.length();
-        return iinInfoProvider.getCardInfoByIin(cardNumber.substring(0, min(cardLength, 6)))
-                .switchIfEmpty(iinInfoProvider.getCardInfoByIin(cardNumber.substring(0, min(cardLength, 7))))
-                .switchIfEmpty(iinInfoProvider.getCardInfoByIin(cardNumber.substring(0, min(cardLength, 8))))
+        return iinInfoProvider.getCardInfoByNumber(cardCostRequest.cardNumber())
                 .doOnNext(iinInfo -> log.info("Card info provided: {}", iinInfo))
                 .flatMap(IINInfo -> getClearCostByCountry(IINInfo.country())
                         .map(clearCost -> new CardCostResponse(IINInfo.country(), clearCost)));
