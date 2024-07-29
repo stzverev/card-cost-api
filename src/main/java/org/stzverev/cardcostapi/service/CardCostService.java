@@ -5,13 +5,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.stzverev.cardcostapi.domain.entity.CurrencyCostEntity;
 import org.stzverev.cardcostapi.domain.repository.CurrencyCostRepository;
+import org.stzverev.cardcostapi.exceptions.CountryAlreadyExistException;
+import org.stzverev.cardcostapi.exceptions.CountryIsNotFoundException;
 import org.stzverev.cardcostapi.exceptions.SearchCountryIsNotFoundException;
 import org.stzverev.cardcostapi.model.CardCostRequest;
 import org.stzverev.cardcostapi.model.CardCostResponse;
 import org.stzverev.cardcostapi.model.CountryCost;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
-import org.stzverev.cardcostapi.exceptions.CountryAlreadyExistException;
-import org.stzverev.cardcostapi.exceptions.CountryIsNotFoundException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -25,7 +25,7 @@ import java.util.List;
 @Slf4j
 public class CardCostService {
 
-    private final IINInfoProvider IINInfoProvider;
+    private final IINInfoProvider iinInfoProvider;
 
     private final CurrencyCostRepository costRepository;
 
@@ -36,7 +36,7 @@ public class CardCostService {
      * @return a Mono object that emits the CardCostResponse once the card cost is retrieved
      */
     public Mono<CardCostResponse> getCardCost(CardCostRequest cardCostRequest) {
-        return IINInfoProvider.getCardInfoByNumber(cardCostRequest.cardNumber())
+        return iinInfoProvider.getCardInfoByNumber(cardCostRequest.cardNumber())
                 .doOnNext(iinInfo -> log.info("Card info provided: {}", iinInfo))
                 .flatMap(IINInfo -> getClearCostByCountry(IINInfo.country())
                         .map(clearCost -> new CardCostResponse(IINInfo.country(), clearCost)));
