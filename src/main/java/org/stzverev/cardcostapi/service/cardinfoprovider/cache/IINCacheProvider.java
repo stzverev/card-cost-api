@@ -35,7 +35,7 @@ public class IINCacheProvider implements IINInfoProvider {
     void init() {
         cachePublisher.asFlux()
                 .flatMap(iinInfo -> iinCacheRepository.save(IINCacheEntity.builder()
-                                .IIN(iinExtractor.getIin(iinInfo.iinInfo()))
+                                .IIN(iinInfo.iinInfo())
                                 .issuingCountry(iinInfo.country())
                                 .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
                                 .build()

@@ -41,9 +41,10 @@ public class IINInfoProviderBinList implements IINInfoProvider {
         if (cardNumber.length() < 6) {
             return Mono.error(() -> new IllegalArgumentException("Card number must be at least 6 characters"));
         }
+        final String iin = iinExtractor.getIin(cardNumber);
         return WebClient.create(binListBaseUrl)
                 .get()
-                .uri("/{cardNumber}", iinExtractor.getIin(cardNumber))
+                .uri("/{cardNumber}", iin)
                 .header("Accept-Version", "3")
                 .retrieve()
                 .onStatus(code -> code.is5xxServerError() || code.equals(HttpStatus.TOO_MANY_REQUESTS),
@@ -58,7 +59,7 @@ public class IINInfoProviderBinList implements IINInfoProvider {
                     default -> throwable;
                 })
                 .doOnNext(binlistResponse -> log.info("Card info is provided by binlist: {}", binlistResponse))
-                .map(response -> new IINInfo(cardNumber, response.country().alpha2()));
+                .map(response -> new IINInfo(iin, response.country().alpha2()));
     }
 
 }
