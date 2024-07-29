@@ -52,6 +52,7 @@ public class IINCacheProvider implements IINInfoProvider {
                                         .build()
                                 )
                                 .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
+                                .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity", throwable))
                                 .subscribe()
                 );
     }
