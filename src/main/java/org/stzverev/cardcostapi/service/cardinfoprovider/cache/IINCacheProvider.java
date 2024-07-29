@@ -40,7 +40,8 @@ public class IINCacheProvider implements IINInfoProvider {
                                 .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
                                 .build())
                         .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
-                        .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity", throwable)))
+                        .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity. entity: {}", o,
+                                throwable)))
                 .subscribe();
     }
 
