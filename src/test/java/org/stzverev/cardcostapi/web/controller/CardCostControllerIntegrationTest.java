@@ -140,7 +140,7 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
         @Test
         void testGetCardCost_shouldReturnOk() throws URISyntaxException {
             //GIVEN
-            wireMockServer.stubFor(get("/37828224")
+            wireMockServer.stubFor(get("/378282")
                             .withHost(WireMock.urlMatching(new URI(wireMockUrl).getHost()).getPattern())
                     .withHeader("Accept-Version", WireMock.equalTo("3"))
                     .willReturn(WireMock.aResponse()
@@ -160,7 +160,7 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
                     .jsonPath("$.country").value(equalTo(expectedResponse.country()))
                     .jsonPath("$.cost").value(equalTo(expectedResponse.cost().intValue()));
 
-            wireMockServer.verify(1, WireMock.getRequestedFor(urlMatching("/37828224")));
+            wireMockServer.verify(1, WireMock.getRequestedFor(urlMatching("/378282")));
         }
 
         @DisplayName("Should get card info from cahce without response to thirdparty provider")
@@ -182,7 +182,7 @@ class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest
                     .expectBody()
                     .jsonPath("$.country").value(equalTo(expectedResponse.country()))
                     .jsonPath("$.cost").value(equalTo(expectedResponse.cost().intValue()));
-            wireMockServer.verify(0, WireMock.getRequestedFor(urlMatching("/37828224")));
+            wireMockServer.verify(0, WireMock.getRequestedFor(urlMatching("/378282")));
         }
 
         @AfterAll

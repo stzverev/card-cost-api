@@ -8,11 +8,11 @@ import reactor.core.publisher.Mono;
 public interface IINInfoProvider {
 
     /**
-     * Retrieves card information based on the card number.
+     * Retrieves card information based on the Issuer Identification Number (IIN).
      *
-     * @param cardNumber The card number.
+     * @param iin The IIN to get card information for.
      * @return A Mono containing the card information.
      */
-    Mono<IINInfo> getCardInfoByNumber(String cardNumber);
+    Mono<IINInfo> getCardInfoByIin(String iin);
 
 }
