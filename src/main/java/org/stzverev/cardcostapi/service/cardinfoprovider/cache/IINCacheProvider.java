@@ -46,7 +46,7 @@ public class IINCacheProvider implements IINInfoProvider {
 
     /**
      * Retrieves card information based on the card number from cache.
-     * If information is not found in cache, it will be fetched be delegate iinInfoProvider and
+     * If information is not found in cache, it will be fetched by delegate iinInfoProvider and
      * saved into cache
      *
      * @param cardNumber The card number.
