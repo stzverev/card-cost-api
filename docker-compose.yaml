@@ -12,7 +12,7 @@ services:
       - mongodb-data:/data/db
 
   card-cost-api:
-    image: card-cost-api
+    image: stanislavzverev/card-cost-api:latest
     depends_on:
       - mongo
     environment:

@@ -82,5 +82,5 @@ tasks.register('dockerPrepare', Copy) {
 
 tasks.register('docker', Exec) {
     dependsOn 'dockerPrepare'
-    commandLine 'docker', 'build', dockerBuildDir, '-t', "${rootProject.name}:latest"
+    commandLine 'docker', 'build', dockerBuildDir, '-t', "stanislavzverev/${rootProject.name}:latest"
 }
