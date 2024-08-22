@@ -1,7 +1,12 @@
 app:
   thirdrpovider:
     binlist:
-      baseUrl: "https://lookup.binlist.net"
+      base-url: "https://lookup.binlist.net"
+      max-call:
+        count: 5
+        time-unit: minutes
+        period: 30
+
 
   iin-cache:
     timeUnit: minutes

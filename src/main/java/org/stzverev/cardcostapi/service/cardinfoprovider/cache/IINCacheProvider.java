@@ -3,8 +3,8 @@ package org.stzverev.cardcostapi.service.cardinfoprovider.cache;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.stzverev.cardcostapi.domain.entity.IINCacheEntity;
-import org.stzverev.cardcostapi.domain.repository.IINCacheRepository;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfoProvider;
@@ -12,7 +12,6 @@ import reactor.core.publisher.Mono;
 import reactor.core.publisher.Sinks;
 
 import java.time.Duration;
-import java.util.Date;
 
 /**
  * Represents a cache provider for retrieving card information based on the Issuer Identification Number (IIN).
@@ -23,22 +22,26 @@ public class IINCacheProvider implements IINInfoProvider {
 
     private final IINInfoProvider iinInfoProvider;
 
-    private final IINCacheRepository iinCacheRepository;
+    private static final String REDIS_PREFIX = "iin-cache-";
 
     private final IINExtractor iinExtractor;
 
     private final Duration expirationDuration;
+
+    private final ReactiveRedisOperations<String, IINCacheEntity> redisOperationsIINCache;
 
     private final Sinks.Many<IINInfo> cachePublisher = Sinks.many().unicast().onBackpressureBuffer();
 
     @PostConstruct
     void init() {
         cachePublisher.asFlux()
-                .flatMap(iinInfo -> iinCacheRepository.save(IINCacheEntity.builder()
-                                .IIN(iinInfo.iin())
-                                .issuingCountry(iinInfo.country())
-                                .expireAt(new Date(System.currentTimeMillis() + expirationDuration.toMillis()))
-                                .build())
+                .flatMap(iinInfo ->
+                        redisOperationsIINCache.opsForValue().set(REDIS_PREFIX + iinInfo.iin(),
+                                        IINCacheEntity.builder()
+                                                .iin(iinInfo.iin())
+                                                .issuingCountry(iinInfo.country())
+                                                .build(),
+                                        expirationDuration)
                         .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
                         .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity. entity: {}", o,
                                 throwable)))
@@ -56,9 +59,9 @@ public class IINCacheProvider implements IINInfoProvider {
     @Override
     public Mono<IINInfo> getCardInfoByNumber(final String cardNumber) {
         final String iin = iinExtractor.getIin(cardNumber);
-        return iinCacheRepository.findByIIN(iin)
+        return redisOperationsIINCache.opsForValue().get(REDIS_PREFIX + iin)
                 .doOnNext(iinCacheEntity -> log.info("iin is fetched from cache: {}", iinCacheEntity))
-                .map(iinInfoProvider -> new IINInfo(iin, iinInfoProvider.getIssuingCountry()))
+                .map(iinInfoProvider -> new IINInfo(iin, iinInfoProvider.issuingCountry()))
                 .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber)
                         .doOnNext(cachePublisher::tryEmitNext));
     }

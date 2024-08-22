@@ -11,19 +11,33 @@ services:
     volumes:
       - mongodb-data:/data/db
 
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   card-cost-api:
     image: stanislavzverev/card-cost-api:latest
     depends_on:
       - mongo
+      - redis
     environment:
       SPRING_DATA_MONGODB_USERNAME: root
       SPRING_DATA_MONGODB_PASSWORD: example
       SPRING_DATA_MONGODB_PORT: 27017
       SPRING_DATA_MONGODB_HOST: mongo
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
       APP_IINCACHE_TIMEUNIT: hours
+      LOGGING_LEVEL_ROOT: INFO
+      LOGGING_LEVEL_ORG_STZVEREV_CARDCOSTAPI: INFO
     ports:
       - "8080:8080"
 
 volumes:
   mongodb-data:
+    driver: local
+  redis-data:
     driver: local

@@ -29,6 +29,7 @@ import static org.springframework.web.reactive.function.BodyInserters.fromResour
 class CardCostControllerIntegrationTest extends BaseSpringBootTestContainersTest {
 
     @InjectWireMock("card-service")
+    @SuppressWarnings("unused")
     private WireMockServer wireMockServer;
 
     @Value("${app.thirdrpovider.binlist.baseUrl}")
