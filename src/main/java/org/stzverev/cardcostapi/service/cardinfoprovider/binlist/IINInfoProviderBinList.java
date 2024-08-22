@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.ReactiveRedisOperations;
 import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.stzverev.cardcostapi.configuration.properties.BinListConfig;
 import org.stzverev.cardcostapi.exceptions.ThirdPartyException;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINInfo;
@@ -23,11 +24,11 @@ import java.time.Duration;
 @Slf4j
 public class IINInfoProviderBinList implements IINInfoProvider {
 
-    private final String binListBaseUrl;
-
     private final IINExtractor iinExtractor;
 
     private final ReactiveRedisOperations<String, Long> apiCallCounterRedisOperations;
+
+    private final BinListConfig binListConfig;
 
     private static final String REDIS_COUNTER_KEY = "api-call-counter";
 
@@ -48,10 +49,12 @@ public class IINInfoProviderBinList implements IINInfoProvider {
             return Mono.error(() -> new IllegalArgumentException("Card number must be at least 6 characters"));
         }
         final ReactiveValueOperations<String, Long> operations = apiCallCounterRedisOperations.opsForValue();
-        return operations.setIfAbsent(REDIS_COUNTER_KEY, 0L, Duration.ofHours(1))
+        final BinListConfig.MaxCallConfig maxCall = binListConfig.getMaxCall();
+        return operations.setIfAbsent(REDIS_COUNTER_KEY, 0L, Duration.of(maxCall.getPeriod(),
+                        maxCall.getTimeUnit().toChronoUnit()))
                 .then(operations.increment(REDIS_COUNTER_KEY))
                 .flatMap(count -> {
-                    if (count > 5) {
+                    if (count > maxCall.getCount()) {
                         return Mono.error(new ThirdPartyException(HttpStatus.TOO_MANY_REQUESTS,
                                 "Too many requests to binlist provider"));
                     }
@@ -60,7 +63,7 @@ public class IINInfoProviderBinList implements IINInfoProvider {
     }
 
     private Mono<IINInfo> requestIinInfo(final String iin) {
-        return WebClient.create(binListBaseUrl)
+        return WebClient.create(binListConfig.getBaseUrl())
                 .get()
                 .uri("/{cardNumber}", iin)
                 .header("Accept-Version", "3")

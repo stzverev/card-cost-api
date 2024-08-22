@@ -3,7 +3,6 @@ package org.stzverev.cardcostapi.configuration;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,6 +14,7 @@ import org.springframework.data.redis.serializer.GenericToStringSerializer;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
+import org.stzverev.cardcostapi.configuration.properties.BinListConfig;
 import org.stzverev.cardcostapi.configuration.properties.IINInfoCacheConfig;
 import org.stzverev.cardcostapi.domain.entity.IINCacheEntity;
 import org.stzverev.cardcostapi.service.cardinfoprovider.IINExtractor;
@@ -47,11 +47,11 @@ public class CardInfoProviderConfig {
 
     @Bean
     public IINInfoProvider cardInfoProviderBinList(
-            @Value("${app.thirdrpovider.binlist.baseUrl}") String binListBaseUrl,
             @Autowired IINExtractor iinExtractor,
-            @Autowired ReactiveRedisOperations<String, Long> apiCallCounterRedisOperations) {
-        log.info("IINInfoProviderBinList is registred");
-        return new IINInfoProviderBinList(binListBaseUrl, iinExtractor, apiCallCounterRedisOperations);
+            @Autowired ReactiveRedisOperations<String, Long> apiCallCounterRedisOperations,
+            final BinListConfig binListConfig) {
+        log.info("IINInfoProviderBinList is registered");
+        return new IINInfoProviderBinList(iinExtractor, apiCallCounterRedisOperations, binListConfig);
     }
 
     @Bean
