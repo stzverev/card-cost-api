@@ -11,10 +11,18 @@ services:
     volumes:
       - mongodb-data:/data/db
 
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   card-cost-api:
     image: stanislavzverev/card-cost-api:latest
     depends_on:
       - mongo
+      - redis
     environment:
       SPRING_DATA_MONGODB_USERNAME: root
       SPRING_DATA_MONGODB_PASSWORD: example
@@ -26,4 +34,6 @@ services:
 
 volumes:
   mongodb-data:
+    driver: local
+  redis-data:
     driver: local
