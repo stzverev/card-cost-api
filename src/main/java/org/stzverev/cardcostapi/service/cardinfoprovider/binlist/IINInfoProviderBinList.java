@@ -2,6 +2,8 @@ package org.stzverev.cardcostapi.service.cardinfoprovider.binlist;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.ReactiveRedisOperations;
+import org.springframework.data.redis.core.ReactiveValueOperations;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.stzverev.cardcostapi.exceptions.ThirdPartyException;
@@ -25,6 +27,10 @@ public class IINInfoProviderBinList implements IINInfoProvider {
 
     private final IINExtractor iinExtractor;
 
+    private final ReactiveRedisOperations<String, Long> apiCallCounterRedisOperations;
+
+    private static final String REDIS_COUNTER_KEY = "api-call-counter";
+
     /**
      * Retrieves card information based on the card number.
      *
@@ -41,7 +47,19 @@ public class IINInfoProviderBinList implements IINInfoProvider {
         if (cardNumber.length() < 6) {
             return Mono.error(() -> new IllegalArgumentException("Card number must be at least 6 characters"));
         }
-        final String iin = iinExtractor.getIin(cardNumber);
+        final ReactiveValueOperations<String, Long> operations = apiCallCounterRedisOperations.opsForValue();
+        return operations.setIfAbsent(REDIS_COUNTER_KEY, 0L, Duration.ofHours(1))
+                .then(operations.increment(REDIS_COUNTER_KEY))
+                .flatMap(count -> {
+                    if (count > 5) {
+                        return Mono.error(new ThirdPartyException(HttpStatus.TOO_MANY_REQUESTS,
+                                "Too many requests to binlist provider"));
+                    }
+                    return Mono.just(count);
+                }).then(requestIinInfo(iinExtractor.getIin(cardNumber)));
+    }
+
+    private Mono<IINInfo> requestIinInfo(final String iin) {
         return WebClient.create(binListBaseUrl)
                 .get()
                 .uri("/{cardNumber}", iin)

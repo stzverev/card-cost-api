@@ -18,4 +18,9 @@ public class TestContainersHealthTest extends BaseTestcontainersTest {
         assertTrue(MONGO_DB_CONTAINER.isHostAccessible());
     }
 
+    @Test
+    void isRedisRunning() {
+        assertTrue(REDIS_CONTAINER.isRunning());
+    }
+
 }
