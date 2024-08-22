@@ -35,13 +35,7 @@ public class IINCacheProvider implements IINInfoProvider {
     @PostConstruct
     void init() {
         cachePublisher.asFlux()
-                .flatMap(iinInfo ->
-                        redisOperationsIINCache.opsForValue().set(REDIS_PREFIX + iinInfo.iin(),
-                                        IINCacheEntity.builder()
-                                                .iin(iinInfo.iin())
-                                                .issuingCountry(iinInfo.country())
-                                                .build(),
-                                        expirationDuration)
+                .flatMap(iinInfo -> saveToCache(iinInfo)
                         .doOnNext(iinCacheEntity -> log.info("iin is saved to cache: {}", iinCacheEntity))
                         .onErrorContinue((throwable, o) -> log.error("Error saving IINCacheEntity. entity: {}", o,
                                 throwable)))
@@ -64,6 +58,20 @@ public class IINCacheProvider implements IINInfoProvider {
                 .map(iinInfoProvider -> new IINInfo(iin, iinInfoProvider.issuingCountry()))
                 .switchIfEmpty(iinInfoProvider.getCardInfoByNumber(cardNumber)
                         .doOnNext(cachePublisher::tryEmitNext));
+    }
+
+    private Mono<IINCacheEntity> saveToCache(IINInfo iinInfo) {
+        return Mono.just(mapToCacheEntity(iinInfo))
+                .flatMap(iinCacheEntity -> redisOperationsIINCache.opsForValue().set(REDIS_PREFIX + iinInfo.iin(),
+                                iinCacheEntity, expirationDuration)
+                        .map(__ -> iinCacheEntity));
+    }
+
+    private static IINCacheEntity mapToCacheEntity(final IINInfo iinInfo) {
+        return IINCacheEntity.builder()
+                .iin(iinInfo.iin())
+                .issuingCountry(iinInfo.country())
+                .build();
     }
 
 }
